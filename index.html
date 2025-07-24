@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Prompt to JSON Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .input-section, .output-section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-1px);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .output-container {
+            background: #f8f9fa;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 300px;
+            position: relative;
+        }
+
+        .json-output {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            color: #333;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #218838;
+            transform: scale(1.05);
+        }
+
+        .template-section {
+            grid-column: 1 / -1;
+            margin-top: 20px;
+            padding-top: 30px;
+            border-top: 2px solid #e1e5e9;
+        }
+
+        .template-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .template-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .template-btn:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+
+        .error {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 6px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .template-buttons {
+                justify-content: center;
+            }
+        }
+
+        .json-key { color: #0066cc; }
+        .json-string { color: #009900; }
+        .json-number { color: #ff6600; }
+        .json-boolean { color: #cc0066; }
+        .json-null { color: #666666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AI Prompt to JSON Converter</h1>
+            <p>Transform your text prompts into structured JSON format for AI tools and APIs</p>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <h2 class="section-title">Input Configuration</h2>
+                
+                <div class="form-group">
+                    <label for="promptText">Prompt Text</label>
+                    <textarea id="promptText" placeholder="Enter your AI prompt here..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="role">Role/System Message</label>
+                    <input type="text" id="role" placeholder="e.g., You are a helpful assistant">
+                </div>
+
+                <div class="form-group">
+                    <label for="model">Model (optional)</label>
+                    <input type="text" id="model" placeholder="e.g., gpt-4, claude-3">
+                </div>
+
+                <div class="form-group">
+                    <label for="temperature">Temperature</label>
+                    <input type="number" id="temperature" min="0" max="2" step="0.1" value="0.7">
+                </div>
+
+                <div class="form-group">
+                    <label for="maxTokens">Max Tokens</label>
+                    <input type="number" id="maxTokens" min="1" value="1000">
+                </div>
+
+                <div class="form-group">
+                    <label for="format">Output Format</label>
+                    <select id="format">
+                        <option value="openai">OpenAI API</option>
+                        <option value="anthropic">Anthropic API</option>
+                        <option value="generic">Generic JSON</option>
+                        <option value="custom">Custom Structure</option>
+                    </select>
+                </div>
+
+                <button class="btn" onclick="convertToJSON()">Convert to JSON</button>
+            </div>
+
+            <div class="output-section">
+                <h2 class="section-title">JSON Output</h2>
+                <div class="output-container">
+                    <button class="copy-btn" onclick="copyToClipboard()">Copy</button>
+                    <div class="json-output" id="jsonOutput">Your JSON output will appear here...</div>
+                </div>
+                <div id="error" class="error" style="display: none;"></div>
+            </div>
+
+            <div class="template-section">
+                <h2 class="section-title">Quick Templates</h2>
+                <p>Load common prompt templates to get started quickly:</p>
+                <div class="template-buttons">
+                    <button class="template-btn" onclick="loadTemplate('creative')">Creative Writing</button>
+                    <button class="template-btn" onclick="loadTemplate('analysis')">Text Analysis</button>
+                    <button class="template-btn" onclick="loadTemplate('coding')">Code Generation</button>
+                    <button class="template-btn" onclick="loadTemplate('qa')">Q&A Assistant</button>
+                    <button class="template-btn" onclick="loadTemplate('translation')">Translation</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function convertToJSON() {
+            const promptText = document.getElementById('promptText').value.trim();
+            const role = document.getElementById('role').value.trim();
+            const model = document.getElementById('model').value.trim();
+            const temperature = parseFloat(document.getElementById('temperature').value);
+            const maxTokens = parseInt(document.getElementById('maxTokens').value);
+            const format = document.getElementById('format').value;
+            
+            const errorDiv = document.getElementById('error');
+            errorDiv.style.display = 'none';
+
+            if (!promptText) {
+                showError('Please enter a prompt text');
+                return;
+            }
+
+            try {
+                let jsonStructure = {};
+
+                switch (format) {
+                    case 'openai':
+                        jsonStructure = {
+                            model: model || "gpt-3.5-turbo",
+                            messages: [
+                                ...(role ? [{ role: "system", content: role }] : []),
+                                { role: "user", content: promptText }
+                            ],
+                            temperature: temperature,
+                            max_tokens: maxTokens
+                        };
+                        break;
+
+                    case 'anthropic':
+                        jsonStructure = {
+                            model: model || "claude-3-sonnet-20240229",
+                            max_tokens: maxTokens,
+                            temperature: temperature,
+                            messages: [
+                                { role: "user", content: promptText }
+                            ]
+                        };
+                        if (role) {
+                            jsonStructure.system = role;
+                        }
+                        break;
+
+                    case 'generic':
+                        jsonStructure = {
+                            prompt: promptText,
+                            ...(role && { system_message: role }),
+                            ...(model && { model: model }),
+                            parameters: {
+                                temperature: temperature,
+                                max_tokens: maxTokens
+                            }
+                        };
+                        break;
+
+                    case 'custom':
+                        jsonStructure = {
+                            input: {
+                                text: promptText,
+                                ...(role && { role: role })
+                            },
+                            config: {
+                                ...(model && { model: model }),
+                                temperature: temperature,
+                                max_output_tokens: maxTokens
+                            },
+                            metadata: {
+                                timestamp: new Date().toISOString(),
+                                format_version: "1.0"
+                            }
+                        };
+                        break;
+                }
+
+                const formattedJSON = JSON.stringify(jsonStructure, null, 2);
+                displayJSON(formattedJSON);
+            } catch (error) {
+                showError('Error creating JSON: ' + error.message);
+            }
+        }
+
+        function displayJSON(jsonString) {
+            const outputDiv = document.getElementById('jsonOutput');
+            outputDiv.textContent = jsonString;
+            highlightJSON();
+        }
+
+        function highlightJSON() {
+            const outputDiv = document.getElementById('jsonOutput');
+            let content = outputDiv.textContent;
+            
+            // Simple syntax highlighting
+            content = content.replace(/"([^"]+)":/g, '<span class="json-key">"$1":</span>');
+            content = content.replace(/: "([^"]+)"/g, ': <span class="json-string">"$1"</span>');
+            content = content.replace(/: (\d+\.?\d*)/g, ': <span class="json-number">$1</span>');
+            content = content.replace(/: (true|false)/g, ': <span class="json-boolean">$1</span>');
+            content = content.replace(/: (null)/g, ': <span class="json-null">$1</span>');
+            
+            outputDiv.innerHTML = content;
+        }
+
+        function copyToClipboard() {
+            const outputDiv = document.getElementById('jsonOutput');
+            const text = outputDiv.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                btn.style.background = '#28a745';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '#28a745';
+                }, 2000);
+            });
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function loadTemplate(type) {
+            const templates = {
+                creative: {
+                    prompt: "Write a creative short story about a character who discovers they can communicate with plants. The story should be approximately 500 words and include dialogue.",
+                    role: "You are a creative writing assistant specialized in crafting engaging narratives with vivid descriptions and compelling characters."
+                },
+                analysis: {
+                    prompt: "Analyze the sentiment and key themes in the following text: [INSERT TEXT HERE]. Provide a detailed breakdown of emotional tone, main ideas, and any underlying messages.",
+                    role: "You are an expert text analyst capable of identifying sentiment, themes, and literary devices in written content."
+                },
+                coding: {
+                    prompt: "Create a Python function that takes a list of numbers and returns the median value. Include error handling for empty lists and non-numeric values.",
+                    role: "You are a senior software developer with expertise in Python programming and best practices for clean, efficient code."
+                },
+                qa: {
+                    prompt: "What are the main benefits of renewable energy sources compared to fossil fuels? Please provide specific examples and data where possible.",
+                    role: "You are a knowledgeable assistant that provides accurate, well-researched answers with supporting evidence and examples."
+                },
+                translation: {
+                    prompt: "Translate the following English text to Spanish, maintaining the original tone and cultural context: 'The weather has been absolutely wonderful this week, perfect for outdoor activities and spending time with family.'",
+                    role: "You are a professional translator fluent in multiple languages, skilled at preserving meaning, tone, and cultural nuances in translations."
+                }
+            };
+
+            const template = templates[type];
+            if (template) {
+                document.getElementById('promptText').value = template.prompt;
+                document.getElementById('role').value = template.role;
+                // Auto-convert after loading template
+                setTimeout(convertToJSON, 100);
+            }
+        }
+
+        // Load default template on page load
+        window.onload = function() {
+            loadTemplate('qa');
+        };
+    </script>
+</body>
+</html>
